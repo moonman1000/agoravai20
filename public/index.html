@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preencher Endereço de Entrega</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        label { display: block; margin-bottom: 10px; }
+        input[type="text"] { width: 100%; padding: 10px; margin-bottom: 20px; }
+        button { padding: 10px 20px; background-color: #4285f4; color: white; border: none; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Preencha seu Endereço de Entrega</h1>
+    <form id="enderecoForm">
+        <label for="endereco">Endereço de Entrega:</label>
+        <input type="text" id="endereco" name="endereco" placeholder="Digite seu endereço completo" required>
+        <button type="submit">Enviar Endereço</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        document.getElementById('enderecoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const endereco = document.getElementById('endereco').value;
+
+            // Enviar o endereço para o servidor para obter as coordenadas e a rota
+            socket.emit('obterCoordenadas', endereco);
+
+            // Ouvir a resposta do servidor com o tempo estimado e as coordenadas do destino
+            socket.on('dadosEntrega', function(dados) {
+                if (dados.tempoEstimado && dados.coordenadas) {
+                    // Armazenar as coordenadas e o tempo estimado no sessionStorage
+                    sessionStorage.setItem('tempoEntrega', dados.tempoEstimado);
+                    sessionStorage.setItem('coordenadasDestino', JSON.stringify(dados.coordenadas));
+
+                    // Redirecionar para a página de rastreamento com as coordenadas
+                    window.location.href = `/rastrearpedido.html?lat=${dados.coordenadas.lat}&lon=${dados.coordenadas.lon}`;
+                } else {
+                    alert('Erro ao processar o endereço. Por favor, tente novamente.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
