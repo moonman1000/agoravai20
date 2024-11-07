@@ -22,22 +22,11 @@
         const apiKey = '5b3ce3597851110001cf6248461ce4f521b24420bbc67527fa68a8ab'; // Insira sua chave da OpenRouteService aqui
 
         // Obter coordenadas e tempo de entrega do sessionStorage
-        const tempoEntrega = parseInt(sessionStorage.getItem('tempoEntrega'), 10); // Converte para número inteiro
+        const tempoEntrega = sessionStorage.getItem('tempoEntrega');
         const coordenadasDestino = JSON.parse(sessionStorage.getItem('coordenadasDestino'));
 
-        // Função para formatar o tempo em horas e minutos
-        function formatarTempo(tempoMinutos) {
-            const horas = Math.floor(tempoMinutos / 60);
-            const minutos = tempoMinutos % 60;
-            if (horas > 0) {
-                return `${horas} horas e ${minutos} minutos`;
-            } else {
-                return `${minutos} minutos`;
-            }
-        }
-
-        // Mostrar o tempo estimado de entrega formatado
-        document.getElementById('tempoEntrega').innerText = `Tempo estimado para entrega: ${formatarTempo(tempoEntrega)}`;
+        // Mostrar o tempo estimado de entrega
+        document.getElementById('tempoEntrega').innerText = `Tempo estimado para entrega: ${tempoEntrega} minutos`;
 
         // Inicializar o mapa
         const map = L.map('map').setView([coordenadasDestino.lat, coordenadasDestino.lon], 13);
