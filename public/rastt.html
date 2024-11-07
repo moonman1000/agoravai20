@@ -19,7 +19,6 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const apiKey = '5b3ce3597851110001cf6248461ce4f521b24420bbc67527fa68a8ab'; // Insira sua chave da OpenRouteService aqui
 
         // Obter coordenadas e tempo de entrega do sessionStorage
         const tempoEntrega = sessionStorage.getItem('tempoEntrega');
@@ -40,49 +39,44 @@
         L.marker([coordenadasDestino.lat, coordenadasDestino.lon]).addTo(map)
             .bindPopup('Endereço de Entrega')
             .openPopup();
-
-        // Variáveis para coordenadas e marcador do motorista e rota
+        
+        // Inicializar variáveis para coordenadas do motorista e rota
         let coordenadasMotorista = null;
         let marcadorMotorista = null;
         let rota = null;
 
-        // Função para obter a rota mais curta
-        async function calcularRota(latInicio, lonInicio, latFim, lonFim) {
-            const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${lonInicio},${latInicio}&end=${lonFim},${latFim}`;
+        // Atualizar a localização do motorista em tempo real
+        socket.on('atualizacaoLocalizacao', (data) => {
+            coordenadasMotorista = { lat: data.lat, lon: data.lon };
 
-            const response = await fetch(url);
-            const data = await response.json();
-            const coordenadasRota = data.features[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-
-            if (rota) {
-                rota.setLatLngs(coordenadasRota);
+            // Se o marcador do motorista já existir, atualize a sua posição
+            if (marcadorMotorista) {
+                marcadorMotorista.setLatLng([coordenadasMotorista.lat, coordenadasMotorista.lon]);
+                if (rota) {
+                    rota.setLatLngs([
+                        [coordenadasMotorista.lat, coordenadasMotorista.lon],
+                        [coordenadasDestino.lat, coordenadasDestino.lon]
+                    ]);
+                }
             } else {
-                rota = L.polyline(coordenadasRota, {
+                // Caso contrário, crie um novo marcador para o motorista
+                marcadorMotorista = L.marker([coordenadasMotorista.lat, coordenadasMotorista.lon]).addTo(map)
+                    .bindPopup('Localização do Motorista')
+                    .openPopup();
+
+                // Adicionar a linha azul da rota entre o motorista e o destino
+                rota = L.polyline([
+                    [coordenadasMotorista.lat, coordenadasMotorista.lon],
+                    [coordenadasDestino.lat, coordenadasDestino.lon]
+                ], {
                     color: 'blue',
                     weight: 5,
                     opacity: 0.7
                 }).addTo(map);
             }
 
-            // Ajustar o mapa para mostrar a rota
+            // Ajustar o mapa para mostrar a rota entre o motorista e o destino
             map.fitBounds(rota.getBounds());
-        }
-
-        // Atualizar a localização do motorista em tempo real
-        socket.on('atualizacaoLocalizacao', (data) => {
-            coordenadasMotorista = { lat: data.lat, lon: data.lon };
-
-            // Atualizar ou criar o marcador do motorista
-            if (marcadorMotorista) {
-                marcadorMotorista.setLatLng([coordenadasMotorista.lat, coordenadasMotorista.lon]);
-            } else {
-                marcadorMotorista = L.marker([coordenadasMotorista.lat, coordenadasMotorista.lon]).addTo(map)
-                    .bindPopup('Localização do Motorista')
-                    .openPopup();
-            }
-
-            // Calcular a rota entre o motorista e o destino
-            calcularRota(coordenadasMotorista.lat, coordenadasMotorista.lon, coordenadasDestino.lat, coordenadasDestino.lon);
         });
     </script>
 </body>

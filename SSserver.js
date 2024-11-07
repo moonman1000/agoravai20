@@ -37,15 +37,12 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // Passo 1: Obter as coordenadas do endereço usando Nominatim com cabeçalho User-Agent
+            // Passo 1: Obter as coordenadas do endereço usando Nominatim
             const response = await axios.get(NOMINATIM_URL, {
                 params: {
                     q: endereco,
                     format: 'json',
                     limit: 1
-                },
-                headers: {
-                    'User-Agent': 'SeuNomeDaAplicacao/1.0 (seuemail@dominio.com)' // Cabeçalho User-Agent
                 }
             });
 
@@ -91,3 +88,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
 });
+
