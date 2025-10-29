@@ -1,8 +1,8 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>App Motorista</title>
   <link rel="manifest" href="/manifest.json" />
   <meta name="theme-color" content="#0ea5e9" />
@@ -29,7 +29,7 @@
     <div class="row">
       <input id="orderId" placeholder="ID do pedido (ex: PED-12345)" />
       <button id="btnStart">Iniciar</button>
-      <button id="btnStop">Parar</button>
+      <button id="btnStop" disabled>Parar</button>
       <button id="btnSim">Simular</button>
     </div>
     <div class="muted" id="status">Aguardando...</div>
@@ -55,13 +55,15 @@
       maxZoom: 19, attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    let socket = io();
+    let socket = null;
     let watchId = null;
     let driverMarker = null;
     let last = null; // {lat,lng,ts}
     let simTimer = null;
     const MIN_MOVE_METERS = 10; // só emite se mover +10m ou 3s
     const MAX_INTERVAL_MS = 3000;
+
+    socket = io();
 
     socket.on('connect', () => setStatus('Socket conectado'));
     socket.on('disconnect', () => setStatus('Socket desconectado'));
@@ -187,6 +189,9 @@
       );
 
       setStatus('Transmitindo posição...');
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnSim.disabled = true;
     }
 
     function stop() {
@@ -195,9 +200,13 @@
         watchId = null;
       }
       if (simTimer) {
-        clearInterval(simTimer); simTimer = null;
+        clearInterval(simTimer);
+        simTimer = null;
       }
       setStatus('Parado.');
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnSim.disabled = false;
     }
 
     function simulate() {
@@ -216,7 +225,6 @@
       last = null;
 
       simTimer = setInterval(() => {
-        // trajetória simples
         step += 1;
         lat += 0.00025 * Math.cos(step / 20);
         lng += 0.00035 * Math.sin(step / 30);
@@ -234,13 +242,17 @@
         last = { lat, lng, ts: Date.now() };
         setStatus('Simulando movimento...');
       }, 1500);
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnSim.disabled = true;
     }
 
     btnStart.addEventListener('click', start);
     btnStop.addEventListener('click', stop);
     btnSim.addEventListener('click', simulate);
 
-    // Facilitar teste: autopreencher por querystring ?orderId=...
+    // Preenche orderId via query string para facilitar testes
     (function prefill() {
       const qs = new URLSearchParams(location.search);
       const oid = qs.get('orderId');
